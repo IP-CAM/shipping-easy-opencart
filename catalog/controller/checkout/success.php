@@ -1,12 +1,16 @@
 <?php
 class ControllerCheckoutSuccess extends Controller {
-
+private $error = array();
   public function index() {
     error_reporting(E_ALL);
     ini_set("display_errors", 1);
     if (isset($this->session->data['order_id'])) {
       $orderid = $this->session->data['order_id'];
+      $shippingzone_id = $this->session->data['shipping_zone_id'];
       //$orderid = 15;
+
+      //echo "<pre>"; print_r($this->session->data); echo "</pre>"; die;
+
       //Include shippingeasy file.
       include ('shipping_easy-php/lib/ShippingEasy.php');
       //Fetch API Key , Secret Key, Base URl from E-commerce databse.
@@ -58,8 +62,8 @@ class ControllerCheckoutSuccess extends Controller {
       $billing_country = $rates[0]['shipping_country'];
       $billing_phone_number = $rates[0]['email'];
       $billing_email = $rates[0]['telephone'];
-
-      $date = $rates[0]['date_modified'];
+      $comment = $rates[0]['comment'];
+      //$date = $rates[0]['date_modified'];
       $products = "SELECT * FROM ".DB_PREFIX."order_total WHERE order_id = '$orderid'";
       $products_detail = $this->db->query($products);
       $prices = array();
@@ -74,6 +78,10 @@ class ControllerCheckoutSuccess extends Controller {
       }
       $total_tax = $prices[1]['value'];
       $total_excluding_tax = $prices[0]['value'];
+
+      //Calculate the time.
+      $time = time();
+      $date = date('Y-m-d H:i:s',$time);
 
       //Creating order array.
       $values = array( "external_order_identifier" => "$orderid",
@@ -101,7 +109,7 @@ class ControllerCheckoutSuccess extends Controller {
         "wrapping_cost_excluding_tax" => "0.00",
         "wrapping_cost_including_tax" => "0.00",
         "wrapping_cost_tax" => "0.00",
-        "notes" => "Please send promptly.",
+        "notes" => "$comment",
         "billing_company" => "$billing_company",
         "billing_first_name" => "$billing_first_name",
         "billing_last_name" => "$billing_last_name",
@@ -137,7 +145,7 @@ class ControllerCheckoutSuccess extends Controller {
             "handling_cost_excluding_tax" => "0.00",
             "handling_cost_including_tax" => "0.00",
             "handling_cost_tax" => "0.00",
-            "shipping_zone_id" => "$state",
+            "shipping_zone_id" => "$shippingzone_id",
             "shipping_zone_name" => "$state",
             "items_total" => "1",
             "items_shipped" => "0",
@@ -145,10 +153,16 @@ class ControllerCheckoutSuccess extends Controller {
           )
         )
       );
-
+      //echo "<pre>"; print_r($values); echo "</pre>"; die;
       //Call ShippingEasy API to place order.
-      $order=new ShippingEasy_Order($storeapi,$values);
-      $order->create();
+      try {
+        $order=new ShippingEasy_Order($storeapi,$values);
+        $order->create();
+      } catch (Exception $e) {
+        //echo '<b> Error: ',  $e->getMessage(), "\n </b>";
+        $this->data['warning'] = $e->getMessage();//$this->language->get('warning');
+        //$this->data
+      }
 
 			$this->cart->clear();
 
@@ -197,6 +211,8 @@ class ControllerCheckoutSuccess extends Controller {
 		);
 
 		$this->data['heading_title'] = $this->language->get('heading_title');
+		
+		//$this->data['warning'] = '';
 
 		if ($this->customer->isLogged()) {
 			$this->data['text_message'] = sprintf($this->language->get('text_customer'), $this->url->link('account/account', '', 'SSL'), $this->url->link('account/order', '', 'SSL'), $this->url->link('account/download', '', 'SSL'), $this->url->link('information/contact'));
@@ -242,7 +258,7 @@ class ControllerCheckoutSuccess extends Controller {
       $item_tax = number_format($item_tax, 2);
       $item_price = $data_detail[$i]['price'];
       $item_prices = number_format($item_price, 2);
-      $b = str_replace( ',', '', $item_prices);
+      $unit_price = str_replace( ',', '', $item_prices);
       $item_name = $data_detail[$i]['name'];
       $item_quantity = $data_detail[$i]['quantity'];
       $item_product_id = $data_detail[$i]['product_id'];
@@ -253,16 +269,23 @@ class ControllerCheckoutSuccess extends Controller {
         $sku_value = $res_sku['sku'];
         $weight = $res_sku['weight'];
       }
+
+
+ $weight_oz = $this->weight->convert($weight * $item_quantity, 6, $this->config->get('config_weight_class_id'));
+
+
+      //echo $weight_oz = $this->weight->convert(10, 3, 6);
       $temp[] = array(
 		    "item_name" => "$item_name",
-		    "sku" => "$sku_value",
-		    "bin_picking_number" => "7",
-		    "unit_price" => "$b",
-		    "total_excluding_tax" => "$item_tax",
-		    "weight_in_ounces" => "$weight",
-		    "quantity" => "$item_quantity",
+		    "sku" => $sku_value,
+		    "bin_picking_number" => 7,
+		    "unit_price" => 12,
+		    "total_excluding_tax" => $unit_price,
+		    "weight_in_ounces" => $weight_oz,
+		    "quantity" => $item_quantity,
 		  );
     }
+      //echo "<pre>"; print_r($temp); echo "</pre>"; die;
   return $temp;
   }
 } ?>

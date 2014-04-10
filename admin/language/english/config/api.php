@@ -8,4 +8,5 @@ $_['text_api']        = '<b>Customer API Key</b>';
 $_['text_Secretkey']    = '<b>Customer Secret Key</b>';
 $_['text_baseurl'] = '<b>Base URL</b>';
 $_['text_storeapi'] = '<b>Store API Key</b>';
+$_['success'] = 'success!';
 ?>

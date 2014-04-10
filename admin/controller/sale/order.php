@@ -94,8 +94,15 @@ class ControllerSaleOrder extends Controller {
         ShippingEasy::setApiKey($api_key);
         ShippingEasy::setApiSecret($secret_key);
         //Call ShippingEasy Cancellation API.
-        $cancellation = new ShippingEasy_Cancellation($storeapi,"$order_id");
-        $cancellation->create();
+        try {
+          $cancellation = new ShippingEasy_Cancellation($storeapi,"$order_id");
+          $cancellation->create();
+        } catch (Exception $e) {
+         
+         
+         $this->session->data['error_warning'] = $e->getMessage();
+         //echo '<div class="warning"> ' . $e->getMessage() . '</div>'; die;
+        }
       }
     }
 		$this->language->load('sale/order');
@@ -397,10 +404,13 @@ class ControllerSaleOrder extends Controller {
 
 		if (isset($this->session->data['success'])) {
 			$this->data['success'] = $this->session->data['success'];
+$this->data['error_warning'] = $this->session->data['error_warning'];
 
 			unset($this->session->data['success']);
+      unset($this->session->data['error_warning']);
 		} else {
 			$this->data['success'] = '';
+      $this->data['error_warning'] = '';
 		}
 
 		$url = '';

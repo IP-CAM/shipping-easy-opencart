@@ -1,6 +1,13 @@
 <?php echo $header; ?>
 <div id="content">
   <?php echo $this->data['heading_title'] ;
+
+
+  if (isset($success)) { ?>
+    <div class="success"><?php echo $success; ?></div>
+  <?php } 
+
+
   $sql = 'SELECT * FROM '.DB_PREFIX.'api1';
   $query = $this->db->query($sql);
   if($query->num_rows == 0 ) {

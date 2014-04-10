@@ -38,8 +38,9 @@ class ControllerConfigApi extends Controller{
 
             //$this->db->query("UPDATE " . DB_PREFIX . "api1 (api,secretkey,baseurl) VALUES('$apikey','$secretkey','$baseurl')");
          }
-	       echo '<div class="success">Success: Form updated successfully.</div>'; 
+       $this->data['success'] = 'Success: Form updated successfully.';
        }
+
        $this->response->setOutput($this->render());
     }
 }
