@@ -262,17 +262,18 @@ private $error = array();
       $item_name = $data_detail[$i]['name'];
       $item_quantity = $data_detail[$i]['quantity'];
       $item_product_id = $data_detail[$i]['product_id'];
-      $data_sku = "SELECT sku , weight FROM ".DB_PREFIX."product WHERE product_id = '$item_product_id'";
+      $data_sku = "SELECT sku , weight , weight_class_id FROM ".DB_PREFIX."product WHERE product_id = '$item_product_id'";
       $result_sku = $this->db->query($data_sku);
 
       foreach($result_sku->rows as $res_sku){
         $sku_value = $res_sku['sku'];
         $weight = $res_sku['weight'];
+        $weight = floatval($weight);
+        $weight_class_id = $res_sku['weight_class_id'];
       }
 
 
- $weight_oz = $this->weight->convert($weight * $item_quantity, 6, $this->config->get('config_weight_class_id'));
-
+      $weight_oz = $this->weight->convert($weight , $weight_class_id , 6);
 
       //echo $weight_oz = $this->weight->convert(10, 3, 6);
       $temp[] = array(
