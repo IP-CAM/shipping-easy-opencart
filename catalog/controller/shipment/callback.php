@@ -6,13 +6,12 @@ class ControllerShipmentCallback extends Controller {
     $values = file_get_contents('php://input');
     $output = json_decode($values, true);
     if(isset($output)) {
-      $id = $output['shipment']['orders']['external_order_identifier'];
+      $id = $output['shipment']['orders'][0]['external_order_identifier'];
       $output['shipment']['orders']['id'];
       $shipping_id = $output['shipment']['id'];
       $tracking_number = $output['shipment']['tracking_number'];
       $carrier_key = $output['shipment']['carrier_key'];
       $carrier_service_key = $output['shipment']['carrier_service_key'];
-      $external_order_identifier = $output['shipment']['orders']['external_order_identifier'];
 
       $comment_update = ' Shipment Tracking Number: ' .$tracking_number. '<br/> Carrier Key: ' .$carrier_key. '<br/> Carrier Service Key: ' .$carrier_service_key ;
 
