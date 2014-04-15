@@ -71,7 +71,7 @@ private $error = array();
         $prices[] = $res;
       }
       if(isset($prices[2])){
-        $total_including_tax = $prices[2]['value'];
+        $total_including_tax = round($prices[2]['value']);
       }
       else {
         $total_including_tax = 0.00;
