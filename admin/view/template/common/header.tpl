@@ -85,7 +85,7 @@ $(document).ready(function(){
       <li id="extension"><a class="top"><?php echo $text_extension; ?></a>
         <ul>
           <li><a href="<?php echo $module; ?>"><?php echo $text_module; ?></a></li>
-					<li><a href="<?php echo $shippingeasy_api; ?>"><?php echo  'SE Settings' ?></a></li>
+					<li><a href="<?php echo $shippingeasy_api; ?>"><?php echo  'ShippingEasy' ?></a></li>
           <li><a href="<?php echo $shipping; ?>"><?php echo $text_shipping; ?></a></li>
           <li><a href="<?php echo $payment; ?>"><?php echo $text_payment; ?></a></li>
           <li><a href="<?php echo $total; ?>"><?php echo $text_total; ?></a></li>

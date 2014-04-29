@@ -7,9 +7,6 @@ private $error = array();
     if (isset($this->session->data['order_id'])) {
       $orderid = $this->session->data['order_id'];
       $shippingzone_id = $this->session->data['shipping_zone_id'];
-      //$orderid = 15;
-
-      //echo "<pre>"; print_r($this->session->data); echo "</pre>"; die;
 
       //Include shippingeasy file.
       include ('shipping_easy-php/lib/ShippingEasy.php');
@@ -28,6 +25,24 @@ private $error = array();
       ShippingEasy::setApiBase($base_url);
       ShippingEasy::setApiKey($api_key);
       ShippingEasy::setApiSecret($secret_key);
+
+      //Check whether all products are downloadable or not.
+      $check_download = "SELECT b.tax_class_id , b.price , a.quantity FROM oc_product b , oc_order_product a WHERE b.product_id = a.product_id and a.order_id = '$orderid'";
+      $check_downloads = $this->db->query($check_download);
+      $products_id = array();
+      foreach($check_downloads->rows as $products_id){
+        $rr[] = $products_id;
+        $products_id_count = count($rr);
+        if(in_array(10 , $products_id)) {
+          $check_download += 1;
+        }
+        else {
+          $total_orderprice = $products_id['price'] * $products_id['quantity'];
+          $total_prices[] = $total_orderprice;
+        }
+      }
+      
+      if($products_id_count > $check_download) {
 
       //Fetch all the values of related order ID.
       $sql = "SELECT * FROM ".DB_PREFIX."order WHERE order_id = '$orderid'";
@@ -63,26 +78,26 @@ private $error = array();
       $billing_phone_number = $rates[0]['email'];
       $billing_email = $rates[0]['telephone'];
       $comment = $rates[0]['comment'];
-      //$date = $rates[0]['date_modified'];
       $products = "SELECT * FROM ".DB_PREFIX."order_total WHERE order_id = '$orderid'";
       $products_detail = $this->db->query($products);
       $prices = array();
       foreach($products_detail->rows as $res){
         $prices[] = $res;
       }
-      if(isset($prices[2])){
-        $total_including_tax = round($prices[2]['value']);
+
+      $total_excluding_tax = 0;
+      $price_arr_count = count($total_prices);
+      for($i=0 ; $i<$price_arr_count ; $i++) {
+        $total_excluding_tax += $total_prices[$i];
       }
-      else {
-        $total_including_tax = 0.00;
-      }
-      $total_tax = $prices[1]['value'];
-      $total_excluding_tax = $prices[0]['value'];
+
+      $total_tax = floatval($prices[1]['value']);
+      $total_including_tax = $total_excluding_tax + $total_tax;
 
       //Calculate the time.
       $time = time();
       $date = date('Y-m-d H:i:s',$time);
-
+      // die;
       //Creating order array.
       $values = array( "external_order_identifier" => "$orderid",
         "ordered_at" => "$date",
@@ -135,7 +150,7 @@ private $error = array();
             "state" => "$state",
             "city" => "$city",
             "postal_code" => "$postal_code",
-            "postal_code_plus_4" => "1234",
+            "postal_code_plus_4" => "",
             "country" => "$country",
             "shipping_method" => "$shipping_method",
             "base_cost" => "$total_excluding_tax",
@@ -153,17 +168,14 @@ private $error = array();
           )
         )
       );
-      //echo "<pre>"; print_r($values); echo "</pre>"; die;
       //Call ShippingEasy API to place order.
       try {
         $order=new ShippingEasy_Order($storeapi,$values);
         $order->create();
       } catch (Exception $e) {
-        //echo '<b> Error: ',  $e->getMessage(), "\n </b>";
         $this->data['warning'] = $e->getMessage();//$this->language->get('warning');
-        //$this->data
       }
-
+      }
 			$this->cart->clear();
 
 			unset($this->session->data['shipping_method']);
@@ -243,15 +255,16 @@ private $error = array();
 	}
 
   public function test($orderid){
-
+    //intializing temp array.
     $temp = array();
+    //fetch product values from databse. 
     $data = "SELECT * FROM ".DB_PREFIX."order_product WHERE order_id = '$orderid'";
     $result = $this->db->query($data);
     $data_detail = array();
     foreach($result->rows as $res){
       $data_detail[] = $res;
     }
-
+    $total_option = 0; 
     $count = count($data_detail);
     for($i=0 ; $i<$count ; $i++) {
       $item_tax = $data_detail[$i]['tax'];
@@ -262,31 +275,74 @@ private $error = array();
       $item_name = $data_detail[$i]['name'];
       $item_quantity = $data_detail[$i]['quantity'];
       $item_product_id = $data_detail[$i]['product_id'];
-      $data_sku = "SELECT sku , weight , weight_class_id FROM ".DB_PREFIX."product WHERE product_id = '$item_product_id'";
+      $data_sku = "SELECT sku , weight , weight_class_id , tax_class_id FROM ".DB_PREFIX."product WHERE product_id = '$item_product_id'";
       $result_sku = $this->db->query($data_sku);
+      //Check whether product is downloadable / virtual or not.
+      if($result_sku->row['tax_class_id'] != 10) {
+        foreach($result_sku->rows as $res_sku){
+          //product sku , weight and weight class id.
+          $sku_value = $res_sku['sku'];
+          $weight = $res_sku['weight'];
+          $weight = floatval($weight);
+          $weight_class_id = $res_sku['weight_class_id'];
+        }
+        //weight convert to OZ.
+        $weight_oz = $this->weight->convert($weight , $weight_class_id , 6);
+        //temp array.
+        $temp[] = array(
+		      "item_name" => "$item_name",
+		      "sku" => $sku_value,
+		      "bin_picking_number" => 0,
+		      "unit_price" => 12,
+		      "total_excluding_tax" => $unit_price,
+		      "weight_in_ounces" => $weight_oz,
+		      "quantity" => $item_quantity,
+		    );
 
-      foreach($result_sku->rows as $res_sku){
-        $sku_value = $res_sku['sku'];
-        $weight = $res_sku['weight'];
-        $weight = floatval($weight);
-        $weight_class_id = $res_sku['weight_class_id'];
+        $product_detail1 = "SELECT product_id FROM ".DB_PREFIX."product_option WHERE product_id = '$item_product_id'";
+        $product_arr1 = $this->db->query($product_detail1);
+        $pr_values1 = array();
+        foreach($product_arr1->rows as $product_option_value1){
+          $pr_values1[] = $product_option_value1;
+        }
+
+        if(!empty($pr_values1)) {
+          $product_detail = "SELECT order_product_id FROM ".DB_PREFIX."order_product WHERE product_id = '$item_product_id' AND order_id = '$orderid' limit $total_option,1";
+          $product_arr = $this->db->query($product_detail);
+          foreach($product_arr->rows as $product_option_value){
+            $pr_values = $product_option_value;
+          }
+          $pr_value = $pr_values['order_product_id'];
+          $check_option = "SELECT name , value FROM ".DB_PREFIX."order_option WHERE order_id = '$orderid' AND order_product_id = '$pr_value'";
+          $check_options = $this->db->query($check_option);
+          $option_values = array();
+          $total_num_rows = $check_options->num_rows;
+            foreach($check_options->rows as $option_value){
+              $option_values[] = $option_value;
+            }
+            //fetch options values and key.
+            for($j=0 ; $j<$total_num_rows ; $j++){
+              $option_key = $option_values[$j]['name'];
+              $option_arr[$option_key] = $option_values[$j]['value'];
+            }
+            $option_product['product_options'] = $option_arr;
+            foreach($temp as $temp_arraykey => $temp_arrayvalue) {
+              $temp_arraykey = $temp_arraykey;
+            }
+            //update temp array
+            $temp[$temp_arraykey] = $temp[$temp_arraykey] + $option_product;
+            $total_option += 1;
+        }
       }
-
-
-      $weight_oz = $this->weight->convert($weight , $weight_class_id , 6);
-
-      //echo $weight_oz = $this->weight->convert(10, 3, 6);
-      $temp[] = array(
-		    "item_name" => "$item_name",
-		    "sku" => $sku_value,
-		    "bin_picking_number" => 7,
-		    "unit_price" => 12,
-		    "total_excluding_tax" => $unit_price,
-		    "weight_in_ounces" => $weight_oz,
-		    "quantity" => $item_quantity,
-		  );
     }
-      //echo "<pre>"; print_r($temp); echo "</pre>"; die;
+    //Check whether weight is blank or zero.
+    $temp_count = count($temp);
+    for($i=0 ; $i<$temp_count ; $i++) {
+      if($temp[$i]['weight_in_ounces'] == 0) {
+        unset($temp[$i]['weight_in_ounces']);
+      }
+    }
   return $temp;
   }
 } ?>
+
