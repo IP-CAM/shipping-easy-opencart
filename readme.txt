@@ -14,15 +14,15 @@ I. To create ShippingEasy Form.
   OpenCart server's main directory. The following OpenCart files
   are replaced by the upload:
 
-  admin/controller/config/api.php
-  admin/controller/module/api.php
+  /admin/controller/config/api.php
+  /admin/controller/module/api.php
 
-  admin/language/english/config/api.php
-  admin/language/english/module/api.php
+  /admin/language/english/config/api.php
+  /admin/language/english/module/api.php
 
-  admin/model/config/api.php
+  /admin/model/config/api.php
 
-  admin/view/template/config/api.tpl
+  /admin/view/template/config/api.tpl
 
   2. Log into shop Admin Panel. Go to System > Users > User Groups and Edit each user to check appropriate checkboxes to add permissions to this extension.
   3. Go to Extensions > Modules. Click Install link next to "ShippingEasy Setting".
@@ -35,8 +35,8 @@ II. To send order cancellation request.
   OpenCart server's main directory. The following OpenCart files
   are replaced by the upload:
 
-  admin/controller/checkout/shipping_easy-php
-  admin/controller/sale/order.php
+  /admin/controller/checkout/shipping_easy-php
+  /admin/controller/sale/order.php
 
 
 III. Shipment callback functioanlity.
@@ -45,7 +45,8 @@ III. Shipment callback functioanlity.
   OpenCart server's main directory. The following OpenCart files
   are replaced by the upload:
 
-  admin/controller/shipment/callback.php
+  /admin/controller/shipment/callback.php
+  /callback.php
 
 
 IV. TO create order.
@@ -54,8 +55,8 @@ IV. TO create order.
   OpenCart server's main directory. The following OpenCart files
   are replaced by the upload:
 
-  catalog/controller/checkout/shipping_easy-php
-  catalog/controller/checkout/success.php
+  /catalog/controller/checkout/shipping_easy-php
+  /catalog/controller/checkout/success.php
 
 Requirements
 ============
