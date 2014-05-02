@@ -45,8 +45,8 @@ III. Shipment callback functioanlity.
   OpenCart server's main directory. The following OpenCart files
   are replaced by the upload:
 
-  /admin/controller/shipment/callback.php
   /callback.php
+  Shipment callback url :- <http://example.com>/callback.php
 
 
 IV. TO create order.
